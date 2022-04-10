@@ -20,3 +20,5 @@
 #define     HC_DS_PIN       4
 #define     HC_SH_PIN       5
 #define     HC_ST_PIN       6
+
+/*---------------------------------*/

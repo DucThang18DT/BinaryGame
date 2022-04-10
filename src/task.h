@@ -25,6 +25,7 @@ TaskHandle_t receiveFromQueue;
 TaskHandle_t endGame;
 
 inline static void vTaskInit();
+inline static void vPortInit();
 static void vGenerateSequence();
 static void vCountDown(void *pvParameters);
 static void vReadButton1(void *pvParameters);
@@ -42,6 +43,28 @@ inline void vTaskInit(){
     isWinner = false;
     xQueue = xQueueCreate(QUEUE_SIZE, sizeof(int));
     
+    vPortInit();
+    LCD_init();
+    vGenerateSequence();
+
+    if (xQueue != NULL){
+        xTaskCreate(vReadButton1, "readButton1", 100, NULL, 2, &readButton1 );
+        Serial.println("readbutton1 OK");
+        xTaskCreate(vReadButton2, "readButton2", 100, NULL, 2, &readButton2);
+        Serial.println("readbutton2 OK");
+        xTaskCreate(vReceiveFromQueue, "Receiver", 100, NULL, 1, &receiveFromQueue);
+        Serial.println("receive from queue OK");
+        // xTaskCreate(vCountDown, "CountDown", 100, NULL, 2, &countDown);
+        // Serial.println("count down OK");
+        // xTaskCreate(vEndGame, "EndGame", 150, NULL, 2, &endGame);
+        // Serial.println("endgame OK");
+        vTaskStartScheduler();
+        Serial.println("end schedule");
+    }
+    Serial.println("end Task Init");
+}
+
+inline void vPortInit(){
     pinMode(BUTTON1, INPUT);
     pinMode(BUTTON2, INPUT);
     pinMode(LED_1_SOURCE, OUTPUT);
@@ -50,6 +73,7 @@ inline void vTaskInit(){
     pinMode(LED_ST_PIN, OUTPUT);
     pinMode(LED_SH_PIN, OUTPUT);
     pinMode(LCD_RS_PIN, OUTPUT);
+    pinMode(LCD_E_PIN, OUTPUT);
     pinMode(HC_ST_PIN, OUTPUT);
     pinMode(HC_SH_PIN, OUTPUT);
     pinMode(HC_DS_PIN, OUTPUT);
@@ -62,26 +86,9 @@ inline void vTaskInit(){
     digitalWrite(LED_DS_PIN, LOW);
     digitalWrite(LED_SH_PIN, LOW);
     digitalWrite(LED_ST_PIN, LOW);
+    digitalWrite(LCD_RS_PIN, LOW);
+    digitalWrite(LCD_E_PIN, LOW);
     digitalWrite(BUZZER, LOW);
-
-    LCD_init();
-    vGenerateSequence();
-
-    if (xQueue != NULL){
-        // xTaskCreate(vReadButton1, "readButton1", 200, NULL, 2, &readButton1 );
-        // Serial.println("readbutton1 OK");
-        // xTaskCreate(vReadButton2, "readButton2", 200, NULL, 2, &readButton2);
-        // Serial.println("readbutton2 OK");
-        // xTaskCreate(vReceiveFromQueue, "Receiver", 100, NULL, 3, &receiveFromQueue);
-        // Serial.println("receive from queue OK");
-        // xTaskCreate(vCountDown, "CountDown", 100, NULL, 2, &countDown);
-        // Serial.println("count down OK");
-        // xTaskCreate(vEndGame, "EndGame", 200, NULL, 1, &endGame);
-        // Serial.println("endgame OK");
-        // // vTaskStartScheduler();
-        // Serial.println("end schedule");
-    }
-    Serial.println("end Task Init");
 }
 
 void vGenerateSequence(){
@@ -109,9 +116,10 @@ void vReceiveFromQueue(void *pvParameters){
     int xValue;
     bool xStatus;
     const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
+    Serial.println("Receice from Queue");
     int index = 0;
     for(;;){
-        Serial.println("Receice from Queue");
+        Serial.println("read queue is running...");
         if (!isCounting){
             break;
         }
@@ -130,15 +138,17 @@ void vReceiveFromQueue(void *pvParameters){
                 isWinner = false;
             }
         }
-        vTaskDelay(20);
+        // vTaskDelay(20/ portTICK_PERIOD_MS);
     }
+    Serial.println("Delete Receive from queue");
     vTaskDelete(receiveFromQueue);
 }
 
 void vReadButton1(void *pvParameters){
     bool xValue;
+    Serial.println("read button 1");
     for (;;){
-        Serial.println("read button 1");
+        Serial.println("read button 1 is running...");
         if (!isCounting){
             break;
         }
@@ -146,16 +156,18 @@ void vReadButton1(void *pvParameters){
         if (xValue){
             vSendToQueue(ZERO);
         }
-        vTaskDelay(20);
+        vTaskDelay(20/ portTICK_PERIOD_MS);
         // taskYIELD();
     }
+    Serial.println("Delete read button 1");
     vTaskDelete(readButton1);
 }
 
 void vReadButton2(void *pvParameters){
     bool xValue;
+    Serial.println("read button 2");
     for (;;){
-        Serial.println("read button 2");
+        Serial.println("read button 2 is running");
         if (!isCounting){
             break;
         }
@@ -163,9 +175,10 @@ void vReadButton2(void *pvParameters){
         if (xValue){
             vSendToQueue(ONE);
         }
-        vTaskDelay(20);
+        vTaskDelay(20/ portTICK_PERIOD_MS);
         // taskYIELD();
     }
+    Serial.println("Delete read button 2");
     vTaskDelete(readButton2);
 } 
 
@@ -173,8 +186,9 @@ void vCountDown(void *pvParameters){
     // unsigned long start = millis();
     int time = TIME_COUNTDOWN;
     TickType_t xLastWakeTime = xTaskGetTickCount();
+    Serial.println("Count Down");
     while (isCounting){
-        Serial.println("Count Down");
+        Serial.println("Count Down is running...");
         // if (millis() - start >= 60){
         //     start = millis();
         //     --time;
@@ -187,12 +201,14 @@ void vCountDown(void *pvParameters){
         }
         vTaskDelayUntil(&xLastWakeTime, 1000/ portTICK_PERIOD_MS);
     }
+    Serial.println("Delete count down");
     vTaskDelete(countDown);
 }
 
 void vEndGame(void *pvParameters){
+    Serial.println("End game");
     for (;;){
-        Serial.println("End game");
+        Serial.println("End game is running...");
         LCD_clear();
         LCD_goto(0,0);
         if (isWinner){
@@ -201,5 +217,6 @@ void vEndGame(void *pvParameters){
         else{
             LCD_showString("You Loss", 0);
         }
-    }   
+    }  
+    Serial.println("Delete end game");
 }

@@ -6,7 +6,7 @@ void _send2LCD(char data, Mode mode)
     delay(10);
     digitalWrite(HC_ST_PIN, HIGH);
     digitalWrite(HC_ST_PIN, LOW);
-    digitalWrite(LCD_RS_PIN, mode == Mode::cmd?LOW:HIGH);
+    digitalWrite(LCD_RS_PIN, (mode == Mode::cmd)?LOW:HIGH);
     digitalWrite(LCD_E_PIN, LOW);
     digitalWrite(LCD_E_PIN, HIGH);
     delay(2);

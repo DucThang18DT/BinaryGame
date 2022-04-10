@@ -3,7 +3,8 @@
 void setup() {
   vTaskInit();
   // LCD_showALetter('A');
-  for (;;);
+  // showTime(9);
+  for (;;) Serial.println("infinity loop...");;
 }
 
 void loop() {}
