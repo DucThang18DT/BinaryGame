@@ -40,7 +40,7 @@ static void vReceiveFromQueue(void *pvParameters);
 
 inline void vTaskInit(){
     Serial.begin(9600);
-    Serial.println("Task Init");
+    // Serial.println("Task Init");
     isCounting = true;
     isWinner = false;
     remainingTime = TIME_COUNTDOWN;
@@ -51,17 +51,11 @@ inline void vTaskInit(){
     vGenerateSequence();
 
     if (xQueue != NULL){
-        xTaskCreate(vReadButton1, "readButton1", 80, NULL, 2, &readButton1);
-        // // Serial.println("readbutton1 OK");
-        xTaskCreate(vReadButton2, "readButton2", 80, NULL, 2, &readButton2);
-        // // Serial.println("readbutton2 OK");
+        // xTaskCreate(vReadButton1, "readButton1", 80, NULL, 2, &readButton1);
+        // xTaskCreate(vReadButton2, "readButton2", 80, NULL, 2, &readButton2);
         xTaskCreate(vShowTime, "ShowTime", 128, NULL, 2, NULL);
         xTaskCreate(vReceiveFromQueue, "Receiver", 128, NULL, 3, &receiveFromQueue);
-        // Serial.println("receive from queue OK");
         xTaskCreate(vCountDown, "CountDown", 80, NULL, 4, &countDown);
-        // Serial.println("count down OK");
-        // xTaskCreate(vEndGame, "EndGame", 40, NULL, 1, &endGame);
-        // Serial.println("endgame OK");
         vTaskStartScheduler();
         Serial.println("end schedule");
     }
@@ -99,7 +93,8 @@ void vGenerateSequence(){
     Serial.println("vGenerateSequence");
     LCD_clear();
     for (int i = 0; i < QUEUE_SIZE; i++){
-        randomSequence[i] = random(0, 10) > 5? 1:0;
+        // randomSeed(analogRead(RANDOM_PIN));
+        randomSequence[i] = random(0, 120) > 60? 1:0;
         LCD_goto(0, i);
         LCD_showALetter(randomSequence[i] + 48);
     }
@@ -120,17 +115,15 @@ void vReceiveFromQueue(void *pvParameters){
     int xValue;
     bool xStatus;
     const TickType_t xTicksToWait = 100 / portTICK_PERIOD_MS;
-    // Serial.println("RF Queue");
     int index = 0;
     for(;;){
-        Serial.println("RQ");
+        // Serial.println("RQ");
         if (!isCounting){
             break;
         }
         xStatus = xQueueReceive(xQueue, &xValue, xTicksToWait);
         if (xStatus){
             LCD_showALetter(xValue + 48);
-            // Serial.println("Received");
             Serial.println(xValue);
             if (randomSequence[index] != xValue){
                 isCounting = false;
@@ -145,7 +138,6 @@ void vReceiveFromQueue(void *pvParameters){
             }
         }
         vTaskDelay(200/ portTICK_PERIOD_MS);
-        // delay(10);
     }
     Serial.println("Delete Receive from queue");
     vTaskDelete(receiveFromQueue);
@@ -153,9 +145,9 @@ void vReceiveFromQueue(void *pvParameters){
 
 void vReadButton1(void *pvParameters){
     bool xValue;
-    Serial.println("r1");
+    // Serial.println("r1");
     for (;;){
-        Serial.println("R b1");
+        // Serial.println("R b1");
         if (!isCounting){
             break;
         }
@@ -172,9 +164,9 @@ void vReadButton1(void *pvParameters){
 
 void vReadButton2(void *pvParameters){
     bool xValue;
-    Serial.println("r2");
+    // Serial.println("r2");
     for (;;){
-        Serial.println("R b2");
+        // Serial.println("R b2");
         if (!isCounting){
             break;
         }
@@ -190,10 +182,7 @@ void vReadButton2(void *pvParameters){
 } 
 
 void vCountDown(void *pvParameters){
-    // unsigned long start = millis();
-    // int time = TIME_COUNTDOWN;
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    // Serial.println("CD");
     while (isCounting){
         --remainingTime;
         vTaskDelayUntil(&xLastWakeTime, 1000/ portTICK_PERIOD_MS);
@@ -204,7 +193,7 @@ void vCountDown(void *pvParameters){
 
 void vShowTime(void *pvParameters){
     for (;;){
-        Serial.println("ST");
+        // Serial.println("ST");
         showTime(remainingTime);
         if (!remainingTime){
             isCounting = false;
@@ -215,9 +204,9 @@ void vShowTime(void *pvParameters){
 }
 
 void vEndGame(){
-    Serial.println("EG");
+    // Serial.println("EG");
     for (;;){
-        Serial.println("EG");
+        // Serial.println("EG");
         LCD_clear();
         LCD_goto(0,0);
         if (isWinner){

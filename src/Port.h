@@ -1,5 +1,8 @@
 #pragma once
 
+// 
+#define     RANDOM_PIN      A3
+
 // Button Pin
 #define     BUTTON1         A0
 #define     BUTTON2         A1
